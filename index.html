@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Mi Planta Viva: simulador educativo para aprender a cuidar plantas.">
+  <title>Mi Planta Viva | Simulador de cuidado de plantas</title>
+  <style>
+    :root {
+      --green: #2f7654; --green-dark: #20563d; --mint: #eaf5ed;
+      --cream: #fbfaf5; --ink: #24352b; --muted: #68776d;
+      --line: #dce8dd; --white: #fff; --orange: #e8a34b;
+      --red: #d96b61; --shadow: 0 12px 32px rgba(35, 75, 50, .09);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: var(--cream); color: var(--ink); }
+    header { padding: 30px 20px 42px; color: white; background: linear-gradient(120deg, #245d42, #4f9569); }
+    .header-inner, main { width: min(1100px, calc(100% - 32px)); margin: auto; }
+    .eyebrow { text-transform: uppercase; letter-spacing: .13em; font-size: .75rem; font-weight: 800; opacity: .85; }
+    h1 { margin: 8px 0; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.08; }
+    header p { max-width: 680px; margin: 12px 0 0; color: #e7f3e9; line-height: 1.6; }
+    main { padding: 26px 0 50px; }
+    .layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; align-items: start; }
+    .card { background: var(--white); border: 1px solid var(--line); border-radius: 20px; padding: 22px; box-shadow: var(--shadow); }
+    .card h2 { margin: 0 0 16px; font-size: 1.2rem; }
+    .plant-stage { min-height: 280px; border-radius: 16px; background: radial-gradient(circle at 50% 38%, #f7fff5, #e8f3e8); display: grid; place-items: center; text-align: center; padding: 20px; }
+    .plant-emoji { font-size: 7rem; line-height: 1.2; filter: drop-shadow(0 10px 8px #456b3920); }
+    .plant-stage strong { display: block; margin-top: 8px; font-size: 1.15rem; }
+    .plant-stage small { color: var(--muted); }
+    .topline { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+    select, button { font: inherit; border-radius: 11px; }
+    select { border: 1px solid var(--line); background: white; padding: 10px 12px; color: var(--ink); }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
+    .stat { background: #f7faf6; border: 1px solid var(--line); border-radius: 13px; padding: 12px; }
+    .stat-head { display: flex; justify-content: space-between; gap: 8px; font-size: .9rem; font-weight: 700; }
+    .track { height: 9px; background: #e4ece4; border-radius: 20px; overflow: hidden; margin-top: 9px; }
+    .fill { height: 100%; width: 50%; background: var(--green); border-radius: inherit; transition: width .25s; }
+    .fill.low { background: var(--red); } .fill.mid { background: var(--orange); }
+    .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    button { border: 0; padding: 12px 10px; cursor: pointer; font-weight: 700; background: var(--mint); color: var(--green-dark); transition: transform .15s, background .15s; }
+    button:hover { transform: translateY(-2px); background: #dcefe1; }
+    button.primary { background: var(--green); color: white; }
+    button.primary:hover { background: var(--green-dark); }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    .actions button span { display: block; font-size: 1.35rem; margin-bottom: 3px; }
+    .mission { background: #fff8e9; border: 1px solid #f2dfb8; padding: 14px; border-radius: 14px; margin-top: 14px; }
+    .mission strong { display: block; margin-bottom: 5px; }
+    .mission p { margin: 0; color: #705b36; font-size: .9rem; line-height: 1.45; }
+    .summary { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+    .pill { background: var(--mint); border-radius: 99px; padding: 7px 12px; font-size: .88rem; font-weight: 700; color: var(--green-dark); }
+    .log { list-style: none; padding: 0; margin: 0; max-height: 190px; overflow: auto; }
+    .log li { border-bottom: 1px solid #edf1ec; padding: 9px 0; color: var(--muted); font-size: .9rem; }
+    .log li:last-child { border: 0; }
+    .notice { min-height: 24px; color: var(--green-dark); font-weight: 650; margin: 12px 0 0; }
+    .footer-note { color: var(--muted); font-size: .85rem; line-height: 1.5; margin-top: 18px; }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 420px) { .stats, .actions { grid-template-columns: 1fr; } .card { padding: 16px; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="eyebrow">Aprendizaje interactivo · Educación ambiental</div>
+    <h1>Mi Planta Viva</h1>
+    <p>Conviértete en responsable de una planta. Observa sus necesidades, toma decisiones de cuidado y descubre cómo tus acciones influyen en su crecimiento.</p>
+  </div>
+</header>
+<main>
+  <div class="layout">
+    <section class="card">
+      <div class="topline">
+        <h2>Mi planta</h2>
+        <select id="plantSelect" aria-label="Seleccionar planta">
+          <option value="pothos">Potus</option>
+          <option value="monstera">Monstera</option>
+          <option value="orchid">Orquídea</option>
+          <option value="fern">Helecho</option>
+          <option value="basil">Albahaca</option>
+        </select>
+      </div>
+      <div class="plant-stage">
+        <div>
+          <div class="plant-emoji" id="plantEmoji" aria-label="Planta">🪴</div>
+          <strong id="plantName">Potus</strong>
+          <small id="plantStage">Etapa: brote</small>
+        </div>
+      </div>
+      <div class="summary">
+        <span class="pill" id="dayLabel">Día 1</span>
+        <span class="pill" id="pointsLabel">⭐ 0 puntos</span>
+        <span class="pill" id="levelLabel">Nivel: principiante</span>
+      </div>
+      <div class="stats" id="stats"></div>
+      <p class="notice" id="notice" role="status">Tu planta necesita atención. Comienza revisando sus indicadores.</p>
+    </section>
+
+    <aside>
+      <section class="card">
+        <h2>Acciones de cuidado</h2>
+        <div class="actions">
+          <button data-action="water"><span>💧</span>Regar</button>
+          <button data-action="light"><span>☀️</span>Revisar luz</button>
+          <button data-action="prune"><span>✂️</span>Podar</button>
+          <button data-action="fertilize"><span>🌱</span>Abonar</button>
+          <button data-action="soil"><span>🪴</span>Revisar tierra</button>
+          <button data-action="pests"><span>🔎</span>Revisar plagas</button>
+        </div>
+        <div class="mission">
+          <strong>🎯 Misión del día</strong>
+          <p id="missionText">Realiza una acción de cuidado y observa cómo responde tu planta.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+          <button class="primary" id="nextDay">Avanzar un día</button>
+          <button id="reset">Reiniciar</button>
+        </div>
+      </section>
+      <section class="card" style="margin-top:20px">
+        <h2>Diario de cuidado</h2>
+        <ul class="log" id="log"><li>Tu experiencia comenzará aquí.</li></ul>
+        <p class="footer-note">Consejo: cada especie tiene necesidades distintas. Observa los indicadores antes de realizar una acción.</p>
+      </section>
+    </aside>
+  </div>
+  <p class="footer-note">Simulación educativa simplificada. Las necesidades reales de una planta dependen de la especie, el clima, la estación, el sustrato y las condiciones del lugar.</p>
+</main>
+<script>
+(() => {
+  const species = {
+    pothos: {name:"Potus", emoji:"🪴", water:65, light:65, nutrients:60, moisture:60, description:"Prefiere luz indirecta y riego moderado."},
+    monstera: {name:"Monstera", emoji:"🌿", water:60, light:70, nutrients:60, moisture:55, description:"Crece bien con luz indirecta brillante."},
+    orchid: {name:"Orquídea", emoji:"🌸", water:50, light:65, nutrients:55, moisture:45, description:"Necesita ventilación y riegos cuidadosos."},
+    fern: {name:"Helecho", emoji:"🌱", water:75, light:45, nutrients:55, moisture:75, description:"Prefiere humedad y luz indirecta."},
+    basil: {name:"Albahaca", emoji:"🌿", water:65, light:85, nutrients:65, moisture:60, description:"Necesita buena luz y humedad equilibrada."}
+  };
+  const labels = {water:"Agua", light:"Luz", health:"Salud", nutrients:"Nutrientes", moisture:"Humedad del suelo"};
+  let state;
+  const $ = id => document.getElementById(id);
+  const clamp = n => Math.max(0, Math.min(100, n));
+  const missions = [
+    "Revisa la humedad del suelo antes de decidir si debes regar.",
+    "Comprueba si la planta recibe una cantidad adecuada de luz.",
+    "Realiza una acción de mantenimiento y observa el resultado.",
+    "Mantén equilibrados el agua y la humedad del suelo."
+  ];
+  function fresh(key) {
+    const p = species[key];
+    return {key, day:1, water:p.water, light:p.light, health:80, nutrients:p.nutrients, moisture:p.moisture, points:0, actions:0, log:[]};
+  }
+  function addLog(message) {
+    state.log.unshift(`Día ${state.day}: ${message}`);
+    state.log = state.log.slice(0, 12);
+  }
+  function notify(message) { $("notice").textContent = message; }
+  function render() {
+    const p = species[state.key];
+    $("plantName").textContent = p.name;
+    $("plantEmoji").textContent = p.emoji;
+    const avg = (state.water + state.light + state.health + state.nutrients + state.moisture) / 5;
+    const stage = avg > 82 && state.day > 8 ? "planta desarrollada" : avg > 65 && state.day > 3 ? "crecimiento" : "brote";
+    $("plantStage").textContent = `Etapa: ${stage}`;
+    $("dayLabel").textContent = `Día ${state.day}`;
+    $("pointsLabel").textContent = `⭐ ${state.points} puntos`;
+    $("levelLabel").textContent = `Nivel: ${state.points >= 80 ? "cuidador experto" : state.points >= 35 ? "cuidador en progreso" : "principiante"}`;
+    const values = {water:state.water, light:state.light, health:state.health, nutrients:state.nutrients, moisture:state.moisture};
+    $("stats").innerHTML = Object.entries(values).map(([key,value]) => {
+      const cls = value < 35 ? "low" : value < 60 ? "mid" : "";
+      return `<div class="stat"><div class="stat-head"><span>${labels[key]}</span><span>${Math.round(value)}%</span></div><div class="track"><div class="fill ${cls}" style="width:${value}%"></div></div></div>`;
+    }).join("");
+    $("log").innerHTML = state.log.length ? state.log.map(item => `<li>${item}</li>`).join("") : "<li>Tu experiencia comenzará aquí.</li>";
+    $("missionText").textContent = missions[(state.day - 1) % missions.length];
+  }
+  function act(action) {
+    let message = "";
+    switch(action) {
+      case "water":
+        if (state.moisture > 82) { state.health = clamp(state.health - 5); message = "El suelo ya estaba húmedo. Evita el exceso de agua."; }
+        else { state.water = clamp(state.water + 20); state.moisture = clamp(state.moisture + 22); state.health = clamp(state.health + 3); message = "Regaste la planta. Observa la humedad del suelo."; }
+        break;
+      case "light":
+        state.light = clamp(state.light + 12); message = "Revisaste la ubicación y mejoraste la exposición a la luz."; break;
+      case "prune":
+        state.health = clamp(state.health + 5); state.points += 5; message = "Retiraste hojas secas y realizaste mantenimiento."; break;
+      case "fertilize":
+        if (state.nutrients > 85) { state.health = clamp(state.health - 4); message = "No necesita más abono por ahora. Evita fertilizar en exceso."; }
+        else { state.nutrients = clamp(state.nutrients + 18); message = "Añadiste nutrientes de forma moderada."; }
+        break;
+      case "soil":
+        message = `Revisaste el sustrato. ${state.moisture < 35 ? "Está seco." : state.moisture > 80 ? "Está demasiado húmedo." : "Tiene una humedad equilibrada."}`; break;
+      case "pests":
+        state.health = clamp(state.health + 2); message = "Inspeccionaste hojas y tallos para detectar posibles plagas."; break;
+    }
+    state.actions++; state.points += 5; addLog(message); notify(message); render();
+  }
+  function nextDay() {
+    state.day++;
+    state.water = clamp(state.water - 9);
+    state.moisture = clamp(state.moisture - 8);
+    state.nutrients = clamp(state.nutrients - 3);
+    const p = species[state.key];
+    const balance = (Math.abs(state.water-p.water) + Math.abs(state.light-p.light) + Math.abs(state.moisture-p.moisture))/3;
+    if (balance < 25 && state.water > 25 && state.light > 25 && state.moisture > 20) {
+      state.health = clamp(state.health + 5); state.points += 10;
+      notify("¡Buen trabajo! Las condiciones están equilibradas y tu planta mejora.");
+    } else {
+      state.health = clamp(state.health - 7);
+      notify("Tu planta muestra señales de estrés. Revisa sus indicadores y ajusta los cuidados.");
+    }
+    addLog("Pasó un día. Las necesidades de la planta cambiaron."); render();
+  }
+  $("plantSelect").addEventListener("change", e => {
+    state = fresh(e.target.value); addLog("Elegiste una nueva especie para cuidar."); notify(species[state.key].description); render();
+  });
+  document.querySelectorAll("[data-action]").forEach(btn => btn.addEventListener("click", () => act(btn.dataset.action)));
+  $("nextDay").addEventListener("click", nextDay);
+  $("reset").addEventListener("click", () => {
+    state = fresh($("plantSelect").value); notify("Simulación reiniciada. Comienza un nuevo cuidado."); render();
+  });
+  state = fresh("pothos"); addLog("Comenzaste a cuidar tu planta."); render();
+})();
+</script>
+</body>
+</html>
