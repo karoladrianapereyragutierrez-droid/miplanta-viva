@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Planta Viva</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f1f6ef;color:#294735;font-family:Arial,sans-serif}
+header{background:#286343;color:white;padding:24px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{margin:8px 0 0;color:#dcebdd}
+main{max-width:1050px;margin:25px auto;padding:15px}
+.panel{background:white;border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 3px 14px #244b3212}
+h2,h3{color:#286343}
+select,button{padding:11px;border-radius:10px;border:1px solid #d5e3d5;font-size:14px}
+select{background:white;width:100%;margin-top:8px}
+button{background:#32774d;color:white;border:0;cursor:pointer;font-weight:bold}
+button:hover{background:#205c39}
+button:disabled{opacity:.4;cursor:not-allowed}
+.plant{text-align:center;background:#edf5e9;border-radius:15px;padding:25px}
+#plant{font-size:120px;transition:.3s}
+#plant.sad{filter:grayscale(.7);transform:rotate(-8deg)}
+#stage{font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.stat{background:#f7faf5;border-radius:12px;padding:12px}
+.stat-head{display:flex;justify-content:space-between;font-size:13px}
+.track{height:9px;background:#e1e9df;border-radius:20px;margin-top:8px;overflow:hidden}
+.fill{height:100%;border-radius:20px;transition:.3s}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.action{padding:15px 7px;min-height:85px}
+.action span{display:block;font-size:23px;margin-bottom:6px}
+#message{padding:13px;border-radius:10px;background:#edf6ed;line-height:1.5}
+.log{max-height:180px;overflow:auto}
+.log p{padding:9px;background:#f5f8f3;border-radius:8px;font-size:13px}
+.mission{display:flex;gap:10px;padding:9px 0;font-size:14px}
+.mission input{accent-color:#286343}
+footer{text-align:center;color:#78877a;font-size:12px;padding:20px}
+@media(max-width:600px){
+ .actions{grid-template-columns:repeat(2,1fr)}
+ .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>🌱 Mi Planta Viva</h1>
+<p>Cuida tu planta, aprende y descubre cómo crece.</p>
+</header>
+
+<main>
+<section class="panel">
+<h2>🌿 Mi jardín virtual</h2>
+<label>Selecciona tu planta:</label>
+<select id="species">
+<option value="potus">Potus</option>
+<option value="monstera">Monstera</option>
+<option value="orquidea">Orquídea</option>
+<option value="helecho">Helecho</option>
+<option value="albahaca">Albahaca</option>
+</select>
+</section>
+
+<section class="panel">
+<div class="plant">
+<div id="plant">🌱</div>
+<h2 id="name">Mi Potus</h2>
+<p id="stage">Etapa: brote</p>
+<p id="mood">😊 Tu planta está saludable</p>
+</div>
+</section>
+
+<section class="panel">
+<h3>📊 Estado de mi planta</h3>
+<div class="stats" id="stats"></div>
+</section>
+
+<section class="panel">
+<h3>🧤 Acciones de cuidado</h3>
+<div class="actions">
+<button class="action" onclick="water()"><span>💧</span>Regar</button>
+<button class="action" onclick="sun()"><span>☀️</span>Revisar luz</button>
+<button class="action" onclick="prune()"><span>✂️</span>Podar hojas</button>
+<button class="action" onclick="fertilize()"><span>🌿</span>Abonar</button>
+<button class="action" onclick="soil()"><span>🪴</span>Revisar tierra</button>
+<button class="action" onclick="pests()"><span>🔎</span>Revisar plagas</button>
+</div>
+</section>
+
+<section class="panel">
+<h3>📌 Recomendaciones</h3>
+<div id="message">Observa tu planta y revisa la humedad de la tierra antes de regar.</div>
+<p><b>Día:</b> <span id="day">1</span> |
+<b>Puntos:</b> ⭐ <span id="points">0</span></p>
+<button onclick="nextDay()">Avanzar un día →</button>
+</section>
+
+<section class="panel">
+<h3>🎯 Misiones de cuidado</h3>
+<div id="missions">
+<label class="mission"><input type="checkbox" onchange="mission(this)"> Revisar la humedad del suelo.</label>
+<label class="mission"><input type="checkbox" onchange="mission(this)"> Comprobar la iluminación.</label>
+<label class="mission"><input type="checkbox" onchange="mission(this)"> Inspeccionar las hojas.</label>
+</div>
+</section>
+
+<section class="panel">
+<h3>📖 Diario de mi planta</h3>
+<div class="log" id="log">
+<p>Día 1: Tu planta llegó a casa. ¡Comienza a cuidarla!</p>
+</div>
+<button onclick="reset()">Reiniciar simulación</button>
+</section>
+</main>
+
+<footer>
+Mi Planta Viva | Simulador educativo de cuidado de plantas
+</footer>
+
+<script>
+const species={
+potus:{name:"Mi Potus",emoji:["🌱","🪴","🌿","🌳"],water:55,light:65,nutrient:65,moist:45,need:15,desc:"Prefiere luz indirecta y que la superficie del sustrato se seque entre riegos."},
+monstera:{name:"Mi Monstera",emoji:["🌱","🪴","🌿","🌳"],water:60,light:70,nutrient:65,moist:50,need:14,desc:"Necesita luz indirecta brillante y buen drenaje."},
+orquidea:{name:"Mi Orquídea",emoji:["🌱","🪴","🌸","🌺"],water:55,light:65,nutrient:60,moist:40,need:12,desc:"Necesita ventilación, luz indirecta y sustrato especial."},
+helecho:{name:"Mi Helecho",emoji:["🌱","🪴","🌿","🌿"],water:65,light:55,nutrient:60,moist:65,need:19,desc:"Prefiere humedad constante sin encharcamiento."},
+albahaca:{name:"Mi Albahaca",emoji:["🌱","🌿","🌿","🌳"],water:65,light:75,nutrient:65,moist:60,need:20,desc:"Necesita abundante luz y humedad moderada."}
+};
+
+let s={},missionsDone=0;
+
+function createPlant(type){
+ const p=species[type];
+ s={type,day:1,points:0,health:90,growth:5,
+ water:p.water,light:p.light,nutrient:p.nutrient,
+ moist:p.moist,pest:false,log:[],done:[]};
+ addLog("Tu planta llegó a casa.");
+ render();
+}
+
+function clamp(n){return Math.max(0,Math.min(100,Math.round(n)))}
+
+function addLog(text){
+ s.log.unshift("Día "+s.day+": "+text);
+ document.getElementById("log").innerHTML=
+ s.log.slice(0,20).map(x=>"<p>"+x+"</p>").join("");
+}
+
+function water(){
+ if(s.moist>85){alert("La tierra está demasiado húmeda. Espera antes de regar.");return}
+ s.water=clamp(s.water+25);
+ s.moist=clamp(s.moist+30);
+ s.points+=5;
+ addLog("Regaste tu planta con agua.");
+ render();
+}
+
+function sun(){
+ s.light=clamp(s.light+20);
+ s.points+=3;
+ addLog("Mejoraste la ubicación y la iluminación.");
+ render();
+}
+
+function prune(){
+ if(s.health<35){alert("Primero debes identificar qué está dañando la planta.");return}
+ s.health=clamp(s.health+4);
+ s.points+=4;
+ addLog("Retiraste cuidadosamente las hojas secas.");
+ render();
+}
+
+function fertilize(){
+ if(s.nutrient>90){alert("No necesita más fertilizante. Evita el exceso.");return}
+ s.nutrient=clamp(s.nutrient+20);
+ s.points+=3;
+ addLog("Agregaste nutrientes al sustrato.");
+ render();
+}
+
+function soil(){
+ let msg=s.moist>75?"La tierra está húmeda. No riegues todavía.":s.moist<30?"La tierra está seca. Comprueba si necesita agua.":"La humedad está en un nivel moderado.";
+ alert(msg);
+ s.points+=2;
+ addLog("Revisaste la humedad de la tierra.");
+ render();
+}
+
+function pests(){
+ if(s.pest){
+ s.pest=false;s.health=clamp(s.health+10);
+ s.points+=6;addLog("Detectaste y trataste una plaga.");
+ }else{
+ s.points+=2;addLog("Inspeccionaste las hojas. No observaste plagas.");
+ }
+ render();
+}
+
+function mission(el){
+ if(el.checked){s.points+=5;missionsDone++;addLog("Completaste una misión. +5 puntos.");}
+ else{missionsDone--;s.points=Math.max(0,s.points-5);}
+ render();
+}
+
+function nextDay(){
+ s.day++;
+ const p=species[s.type];
+ s.water=clamp(s.water-p.need);
+ s.moist=clamp(s.moist-15);
+ s.light=clamp(s.light-8);
+ s.nutrient=clamp(s.nutrient-4);
+
+ let stress=0;
+ if(s.water<20)stress+=8;
+ if(s.moist<15)stress+=8;
+ if(s.moist>90)stress+=10;
+ if(s.light<25)stress+=7;
+ if(s.nutrient<15)stress+=4;
+
+ if(stress===0&&s.water>35&&s.moist>25&&s.light>35){
+ s.health=clamp(s.health+2);
+ s.growth=clamp(s.growth+5);
+ }else{
+ s.health=clamp(s.health-stress);
+ }
+
+ if(s.day%5===0&&Math.random()<.3){
+ s.pest=true;addLog("Se detectaron posibles plagas. Revisa las hojas.");
+ }
+
+ document.querySelectorAll("#missions input").forEach(x=>x.checked=false);
+ missionsDone=0;
+ s.done=[];
+ addLog("Comenzó un nuevo día. Revisa las necesidades de tu planta.");
+ render();
+}
+
+function render(){
+ const p=species[s.type];
+ document.getElementById("name").textContent=p.name;
+ document.getElementById("day").textContent=s.day;
+ document.getElementById("points").textContent=s.points;
+
+ let stage=s.growth<25?0:s.growth<50?1:s.growth<80?2:3;
+ document.getElementById("plant").textContent=p.emoji[stage];
+ document.getElementById("plant").className=s.health<40?"sad":"";
+ document.getElementById("stage").textContent=
+ ["Etapa: brote","Etapa: planta joven","Etapa: crecimiento","Etapa: planta desarrollada"][stage];
+
+ document.getElementById("mood").textContent=
+ s.health>75?"😊 Tu planta está saludable":
+ s.health>45?"😐 Tu planta necesita atención":"🥀 Tu planta está delicada";
+
+ const values=[
+ ["Agua",s.water,"#4598c0"],
+ ["Luz",s.light,"#d8ad43"],
+ ["Salud",s.health,"#459b60"],
+ ["Nutrientes",s.nutrient,"#9876b5"],
+ ["Humedad del suelo",s.moist,"#4b9d91"],
+ ["Crecimiento",s.growth,"#4c9b65"]
+ ];
+ document.getElementById("stats").innerHTML=values.map(v=>
+ `<div class="stat"><div class="stat-head"><b>${v[0]}</b><span>${v[1]}%</span></div>
+ <div class="track"><div class="fill" style="width:${v[1]}%;background:${v[2]}"></div></div></div>`
+ ).join("");
+
+ let advice=s.moist>85?"Hay exceso de humedad. No riegues todavía.":
+ s.water<30||s.moist<25?"Comprueba el sustrato. Podría necesitar agua.":
+ s.light<35?"Necesita una ubicación con mejor iluminación.":
+ s.nutrient<20?"Revisa si necesita fertilización.":
+ s.health<40?"Revisa hojas, raíces y posibles enfermedades.":
+ "Tu planta está estable. Continúa observándola y cuidándola.";
+
+ document.getElementById("message").textContent=advice;
+}
+
+document.getElementById("species").onchange=e=>createPlant(e.target.value);
+
+function reset(){
+ if(confirm("¿Reiniciar todos los cuidados y puntos?")){
+ createPlant(s.type);
+ document.querySelectorAll("#missions input").forEach(x=>x.checked=false);
+ missionsDone=0;
+ }
+}
+
+createPlant("potus");
+</script>
+</body>
+</html>
